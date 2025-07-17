@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <title>Passages à Niveau à Proximité</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
   <style>
     body { margin: 0; font-family: sans-serif; }
     #map { height: 100vh; }
@@ -31,7 +28,7 @@
       const userMarker = L.marker([lat, lon]).addTo(map).bindPopup('📍 Vous êtes ici').openPopup();
 
       const radiusKm = 5;
-      const url = `https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/liste-des-passages-a-niveau/records?where=within_distance(geo_point_2d,geom'POINT(${lon} ${lat})',${radiusKm * 1000})&limit=100`;
+      const url = `https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/liste-des-passages-a-niveau/records?where=within_distance(geo_point_2d, geom'POINT(${lon} ${lat})', ${radiusKm * 1000})`;
 
       fetch(url)
         .then(res => res.json())
@@ -55,6 +52,13 @@
         });
     }
 
+    function convertL93ToWGS84(x_l93, y_l93) {
+      proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+      proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
+      const coordsWGS84 = proj4("EPSG:2154", "WGS84", [x_l93, y_l93]);
+      return { longitude: coordsWGS84[0], latitude: coordsWGS84[1] };
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => {
@@ -62,10 +66,20 @@
         },
         err => {
           info.textContent = "Erreur : impossible d'obtenir votre position.";
+          // Exemple de coordonnées Lambert-93
+          const x_l93 = 462292.84380000085;
+          const y_l93 = 6255500.5;
+          const { latitude, longitude } = convertL93ToWGS84(x_l93, y_l93);
+          showMap(latitude, longitude);
         }
       );
     } else {
       info.textContent = "La géolocalisation n'est pas supportée.";
+      // Exemple de coordonnées Lambert-93
+      const x_l93 = 462292.84380000085;
+      const y_l93 = 6255500.5;
+      const { latitude, longitude } = convertL93ToWGS84(x_l93, y_l93);
+      showMap(latitude, longitude);
     }
   </script>
 </body>
