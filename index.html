@@ -18,21 +18,28 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     const info = document.getElementById('info');
+    let map;
 
-    function showMap(lat, lon) {
-      const map = L.map('map').setView([lat, lon], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-      const userMarker = L.marker([lat, lon]).addTo(map).bindPopup('📍 Vous êtes ici').openPopup();
+    function getRadiusByZoom(zoomLevel) {
+      // Définir le rayon en fonction du niveau de zoom
+      const zoomToRadius = {
+        18: 1, 17: 2, 16: 3, 15: 4, 14: 5, 13: 10, 12: 15, 11: 20, 10: 30, 9: 40, 8: 50
+      };
+      return zoomToRadius[zoomLevel] || 50; // Rayon par défaut si le niveau de zoom n'est pas défini
+    }
 
-      const radiusKm = 5;
+    function fetchData(lat, lon, radiusKm) {
       const url = `https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/liste-des-passages-a-niveau/records?where=within_distance(geo_point_2d, geom'POINT(${lon} ${lat})', ${radiusKm * 1000})`;
 
       fetch(url)
         .then(res => res.json())
         .then(data => {
+          map.eachLayer(layer => {
+            if (layer instanceof L.Marker && !layer._userMarker) {
+              map.removeLayer(layer);
+            }
+          });
+
           if (data.results.length === 0) {
             info.textContent = "Aucun passage à niveau trouvé à proximité.";
             return;
@@ -52,6 +59,28 @@
         });
     }
 
+    function showMap(lat, lon) {
+      if (map) {
+        map.remove();
+      }
+      map = L.map('map').setView([lat, lon], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      const userMarker = L.marker([lat, lon]).addTo(map).bindPopup('📍 Vous êtes ici').openPopup();
+      userMarker._userMarker = true;
+
+      const radiusKm = getRadiusByZoom(map.getZoom());
+      fetchData(lat, lon, radiusKm);
+
+      map.on('zoomend', function() {
+        const newRadiusKm = getRadiusByZoom(map.getZoom());
+        fetchData(lat, lon, newRadiusKm);
+      });
+    }
+
     function convertL93ToWGS84(x_l93, y_l93) {
       proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
       proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
@@ -66,7 +95,6 @@
         },
         err => {
           info.textContent = "Erreur : impossible d'obtenir votre position.";
-          // Exemple de coordonnées Lambert-93
           const x_l93 = 462292.84380000085;
           const y_l93 = 6255500.5;
           const { latitude, longitude } = convertL93ToWGS84(x_l93, y_l93);
@@ -75,7 +103,6 @@
       );
     } else {
       info.textContent = "La géolocalisation n'est pas supportée.";
-      // Exemple de coordonnées Lambert-93
       const x_l93 = 462292.84380000085;
       const y_l93 = 6255500.5;
       const { latitude, longitude } = convertL93ToWGS84(x_l93, y_l93);
