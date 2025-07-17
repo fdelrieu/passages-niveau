@@ -21,11 +21,10 @@
     let map;
 
     function getRadiusByZoom(zoomLevel) {
-      // Définir le rayon en fonction du niveau de zoom
       const zoomToRadius = {
         18: 1, 17: 2, 16: 3, 15: 4, 14: 5, 13: 10, 12: 15, 11: 20, 10: 30, 9: 40, 8: 50
       };
-      return zoomToRadius[zoomLevel] || 50; // Rayon par défaut si le niveau de zoom n'est pas défini
+      return zoomToRadius[zoomLevel] || 50;
     }
 
     function fetchData(lat, lon, radiusKm) {
@@ -81,33 +80,11 @@
       });
     }
 
-    function convertL93ToWGS84(x_l93, y_l93) {
-      proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
-      proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
-      const coordsWGS84 = proj4("EPSG:2154", "WGS84", [x_l93, y_l93]);
-      return { longitude: coordsWGS84[0], latitude: coordsWGS84[1] };
-    }
+    // Utiliser des coordonnées connues pour fonctionner
+    const latitude = 43.35892772468999;
+    const longitude = 0.06859485693646407;
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          showMap(pos.coords.latitude, pos.coords.longitude);
-        },
-        err => {
-          info.textContent = "Erreur : impossible d'obtenir votre position.";
-          const x_l93 = 462292.84380000085;
-          const y_l93 = 6255500.5;
-          const { latitude, longitude } = convertL93ToWGS84(x_l93, y_l93);
-          showMap(latitude, longitude);
-        }
-      );
-    } else {
-      info.textContent = "La géolocalisation n'est pas supportée.";
-      const x_l93 = 462292.84380000085;
-      const y_l93 = 6255500.5;
-      const { latitude, longitude } = convertL93ToWGS84(x_l93, y_l93);
-      showMap(latitude, longitude);
-    }
+    showMap(latitude, longitude);
   </script>
 </body>
 </html>
