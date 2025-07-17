@@ -19,7 +19,6 @@
 <body>
   <div id="info">📍 Recherche de votre position...</div>
   <div id="map"></div>
-
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-oRv+0xNnP7hh3zRPn+YVQn2CwG+8NkUil6WnE7XY4xs="
@@ -27,20 +26,15 @@
   ></script>
   <script>
     const info = document.getElementById('info');
-
     function showMap(lat, lon) {
       const map = L.map('map').setView([lat, lon], 13);
-
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
-
       const userMarker = L.marker([lat, lon]).addTo(map).bindPopup('📍 Vous êtes ici').openPopup();
-
       const radiusKm = 5;
-      const url = `https://data.sncf.com/api/explore/v2.1/catalog/datasets/reseau-ferre-national-passages-a-niveau/records?where=within_distance(geo_point_2d, geom'POINT(${lon}%20${lat})', ${radiusKm}km)&limit=100`;
-
+      const url = `https://data.sncf.com/api/explore/v2.1/catalog/datasets/reseau-ferre-national-passages-a-niveau/records?where=within_distance(geo_point_2d,geom'POINT(${lon} ${lat})',${radiusKm}000)&limit=100`;
       fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -62,7 +56,6 @@
           info.textContent = "Erreur lors de la récupération des données.";
         });
     }
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => {
@@ -78,4 +71,3 @@
   </script>
 </body>
 </html>
-
