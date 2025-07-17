@@ -31,7 +31,7 @@
       const userMarker = L.marker([lat, lon]).addTo(map).bindPopup('📍 Vous êtes ici').openPopup();
 
       const radiusKm = 5;
-      const url = `https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/liste-des-passages-a-niveau/records?limit=100`;
+      const url = `https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/liste-des-passages-a-niveau/records?where=within_distance(geo_point_2d,geom'POINT(${lon} ${lat})',${radiusKm * 1000})&limit=100`;
 
       fetch(url)
         .then(res => res.json())
@@ -40,13 +40,12 @@
             info.textContent = "Aucun passage à niveau trouvé à proximité.";
             return;
           }
-          info.textContent = `${data.results.length} passage(s) à niveau trouvés.`;
+          info.textContent = `${data.results.length} passage(s) à niveau trouvés dans un rayon de ${radiusKm} km.`;
           data.results.forEach(pn => {
-            if (pn.geolocalisation) {
-              const [lon, lat] = pn.geolocalisation;
-              L.marker([lat, lon])
+            if (pn.geo_point_2d) {
+              L.marker([pn.geo_point_2d.lat, pn.geo_point_2d.lon])
                 .addTo(map)
-                .bindPopup(`PN n°${pn.numero_pn}<br>${pn.commune} (${pn.departement})`);
+                .bindPopup(`PN n°${pn.libelle}<br>${pn.commune || 'Inconnu'} (${pn.departement || 'Inconnu'})`);
             }
           });
         })
