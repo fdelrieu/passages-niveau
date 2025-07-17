@@ -33,6 +33,7 @@
       fetch(url)
         .then(res => res.json())
         .then(data => {
+          // Effacer les anciens marqueurs
           map.eachLayer(layer => {
             if (layer instanceof L.Marker && !layer._userMarker) {
               map.removeLayer(layer);
@@ -43,12 +44,15 @@
             info.textContent = "Aucun passage à niveau trouvé à proximité.";
             return;
           }
+
           info.textContent = `${data.results.length} passage(s) à niveau trouvés dans un rayon de ${radiusKm} km.`;
+
+          // Ajouter les nouveaux marqueurs
           data.results.forEach(pn => {
             if (pn.geo_point_2d) {
-              L.marker([pn.geo_point_2d.lat, pn.geo_point_2d.lon])
-                .addTo(map)
+              const marker = L.marker([pn.geo_point_2d.lat, pn.geo_point_2d.lon]).addTo(map)
                 .bindPopup(`PN n°${pn.libelle}<br>${pn.commune || 'Inconnu'} (${pn.departement || 'Inconnu'})`);
+              console.log(`Marker added at: ${pn.geo_point_2d.lat}, ${pn.geo_point_2d.lon}`);
             }
           });
         })
